@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@googlemaps/react-wrapper": "^1.2.0",
+    "@types/node": "^24.9.1",
     "@vis.gl/react-google-maps": "^0.10.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
