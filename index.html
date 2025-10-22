@@ -3,278 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Dairy Delivery Schedule</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 1rem;
-            background-color: #f8f9fa;
-            color: #333;
-        }
-        h1 {
-            text-align: center;
-            color: #0056b3;
-            margin-bottom: 2rem;
-        }
-        /* New Calendar Styles */
-        .calendar-view {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 1rem;
-            margin-bottom: 2.5rem;
-            background-color: #fff;
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        .calendar-day {
-            padding: 1rem;
-            border-right: 1px solid #eee;
-        }
-        .calendar-day:last-child {
-            border-right: none;
-        }
-        .calendar-day h3 {
-            margin-top: 0;
-            color: #007bff;
-            text-align: center;
-        }
-        .calendar-day .content {
-            font-size: 0.9em;
-            color: #555;
-            min-height: 100px; /* Ensure consistent height */
-        }
-        .calendar-day .entry {
-            margin-bottom: 0.5rem;
-        }
-        .calendar-day .entry .name {
-            font-weight: bold;
-        }
-        .calendar-day .entry .location {
-            font-size: 0.9em;
-            color: #666;
-        }
-
-        .week-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        .day-card {
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            padding: 1.5rem;
-        }
-        .day-card h2 {
-            margin-top: 0;
-            color: #007bff;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .customer-entry {
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 1rem;
-        }
-        .customer-entry:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        .form-group {
-            margin-bottom: 0.75rem;
-            position: relative;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.25rem;
-            font-weight: 600;
-            color: #555;
-            font-size: 0.9em;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 0.95rem;
-        }
-        .suggestions-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background-color: white;
-            z-index: 1000;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .suggestion-item {
-            padding: 0.75rem;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        }
-        .suggestion-item:last-child { border-bottom: none; }
-        .suggestion-item:hover { background-color: #f0f0f0; }
-    </style>
+    <title>Weekly Sales Route Schedule</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>Weekly Dairy Delivery Schedule</h1>
-
-    <!-- Calendar View -->
-    <div class="calendar-view">
-        <div class="calendar-day" id="cal-monday">
-            <h3>Monday</h3>
-            <div class="content"></div>
-        </div>
-        <div class="calendar-day" id="cal-tuesday">
-            <h3>Tuesday</h3>
-            <div class="content"></div>
-        </div>
-        <div class="calendar-day" id="cal-wednesday">
-            <h3>Wednesday</h3>
-            <div class="content"></div>
-        </div>
-        <div class="calendar-day" id="cal-thursday">
-            <h3>Thursday</h3>
-            <div class="content"></div>
-        </div>
-        <div class="calendar-day" id="cal-friday">
-            <h3>Friday</h3>
-            <div class="content"></div>
+    <div id="user-panel">
+        <div class="user-box">
+            <h2>Enter Your Name</h2>
+            <p>Please enter your name or initials to track edits and notes.</p>
+            <input type="text" id="user-name-input" placeholder="e.g., John S.">
+            <button id="set-user-btn">Set User</button>
         </div>
     </div>
 
-    <div class="week-container">
-        <!-- Day Cards for data entry -->
-        <div class="day-card" id="monday"><h2>Monday</h2><div class="customer-entry"><div class="form-group"><label>Customer Name</label><input type="text" class="customer-name-search" placeholder="Start typing a name..."></div><div class="form-group"><label>Address</label><input type="text" class="customer-address"></div></div></div>
-        <div class="day-card" id="tuesday"><h2>Tuesday</h2><div class="customer-entry"><div class="form-group"><label>Customer Name</label><input type="text" class="customer-name-search" placeholder="Start typing a name..."></div><div class="form-group"><label>Address</label><input type="text" class="customer-address"></div></div></div>
-        <div class="day-card" id="wednesday"><h2>Wednesday</h2><div class="customer-entry"><div class="form-group"><label>Customer Name</label><input type="text" class="customer-name-search" placeholder="Start typing a name..."></div><div class="form-group"><label>Address</label><input type="text" class="customer-address"></div></div></div>
-        <div class="day-card" id="thursday"><h2>Thursday</h2><div class="customer-entry"><div class="form-group"><label>Customer Name</label><input type="text" class="customer-name-search" placeholder="Start typing a name..."></div><div class="form-group"><label>Address</label><input type="text" class="customer-address"></div></div></div>
-        <div class="day-card" id="friday"><h2>Friday</h2><div class="customer-entry"><div class="form-group"><label>Customer Name</label><input type="text" class="customer-name-search" placeholder="Start typing a name..."></div><div class="form-group"><label>Address</label><input type="text" class="customer-address"></div></div></div>
+    <div id="app-body" class="hidden">
+        <div class="header">
+            <h1>Weekly Sales Route</h1>
+            <div class="header-controls">
+                <button id="show-add-panel-btn">Add Customer +</button>
+                <div id="user-display"></div>
+            </div>
+        </div>
+        
+        <div class="calendar-view">
+            <div class="calendar-day" id="cal-monday"><div class="day-header"><h3>Monday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="monday" data-location="shop">Shop</button><button class="day-start-btn" data-day="monday" data-location="syracuse">Syracuse</button></div></div><div class="content dropzone"></div></div>
+            <div class="calendar-day" id="cal-tuesday"><div class="day-header"><h3>Tuesday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="tuesday" data-location="shop">Shop</button><button class="day-start-btn" data-day="tuesday" data-location="syracuse">Syracuse</button></div></div><div class="content dropzone"></div></div>
+            <div class="calendar-day" id="cal-wednesday"><div class="day-header"><h3>Wednesday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="wednesday" data-location="shop">Shop</button><button class="day-start-btn" data-day="wednesday" data-location="syracuse">Syracuse</button></div></div><div class="content dropzone"></div></div>
+            <div class="calendar-day" id="cal-thursday"><div class="day-header"><h3>Thursday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="thursday" data-location="shop">Shop</button><button class="day-start-btn" data-day="thursday" data-location="syracuse">Syracuse</button></div></div><div class="content dropzone"></div></div>
+            <div class="calendar-day" id="cal-friday"><div class="day-header"><h3>Friday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="friday" data-location="shop">Shop</button><button class="day-start-btn" data-day="friday" data-location="syracuse">Syracuse</button></div></div><div class="content dropzone"></div></div>
+        </div>
+        
+        <div class="controls">
+             <button id="show-optimizer-btn">Optimize a Route</button>
+        </div>
+
+        <div id="entry-panel" class="hidden">
+            <h2 id="panel-title">Add a New Customer</h2>
+            <button type="button" class="cancel-btn" id="cancel-entry-panel">X</button>
+            <div class="panel-columns">
+                <div class="panel-left">
+                    <div class="form-group"><label for="day-select">Day of the Week</label><select id="day-select"><option value="monday">Monday</option><option value="tuesday">Tuesday</option><option value="wednesday">Wednesday</option><option value="thursday">Thursday</option><option value="friday">Friday</option></select></div>
+                    <div class="form-group"><label for="customer-search">Customer Name</label><input type="text" id="customer-search" placeholder="Start typing a name..."></div>
+                    <div class="form-group" id="simple-temp-group"><label for="temperature-input">Customer Temperature (%)</label><input type="number" id="temperature-input" min="1" max="99" value="50"></div>
+                    <button type="button" class="secondary-btn" id="toggle-sector-btn">Enable Sector Calculation</button>
+                    <div id="sector-calculator" class="hidden">
+                        <div class="sector-inputs">
+                            <div class="form-group"><label>Parts</label><input type="number" class="sector-input" id="parts-val" min="1" max="99" value="50"></div>
+                            <div class="form-group"><label>Service</label><input type="number" class="sector-input" id="service-val" min="1" max="99" value="50"></div>
+                            <div class="form-group"><label>Chemicals</label><input type="number" class="sector-input" id="chemicals-val" min="1" max="99" value="50"></div>
+                            <div class="form-group"><label>Projects</label><input type="number" class="sector-input" id="projects-val" min="1" max="99" value="50"></div>
+                        </div>
+                        <div class="form-group checkbox-group"><input type="checkbox" id="enable-weighting"><label for="enable-weighting">Enable Weighting</label></div>
+                        <div id="weighting-inputs" class="hidden">
+                            <div class="sector-inputs">
+                                <div class="form-group weight-group"><input type="number" class="weight-input" id="parts-weight" value="25" min="0" max="100"><span>%</span></div>
+                                <div class="form-group weight-group"><input type="number" class="weight-input" id="service-weight" value="25" min="0" max="100"><span>%</span></div>
+                                <div class="form-group weight-group"><input type="number" class="weight-input" id="chemicals-weight" value="25" min="0" max="100"><span>%</span></div>
+                                <div class="form-group weight-group"><input type="number" class="weight-input" id="projects-weight" value="25" min="0" max="100"><span>%</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="main-action-btn">Add to Route</button>
+                        <button type="button" class="danger-btn hidden" id="delete-btn">Delete Entry</button>
+                    </div>
+                </div>
+                <div id="notes-section" class="panel-right hidden">
+                    <h3>Notes</h3>
+                    <div id="notes-thread"></div>
+                    <div class="form-group"><textarea id="note-input" placeholder="Add a new note..."></textarea><button type="button" class="secondary-btn" id="add-note-btn">Add Note</button></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="optimizer-panel" class="hidden">
+            <h2>Route Optimizer</h2>
+            <button type="button" class="cancel-btn" id="cancel-optimizer-panel">X</button>
+            <div id="optimizer-inputs">
+                <div class="optimizer-config">
+                    <div class="form-group"><label for="optimizer-start-location">Start Location</label><select id="optimizer-start-location"><option value="shop">Shop</option><option value="syracuse">Syracuse</option></select></div>
+                    <div class="form-group"><label for="optimizer-start-time">Start Time</label><input type="time" id="optimizer-start-time" value="08:00"></div>
+                    <div class="form-group"><label for="optimizer-interval">Time at Stop (minutes)</label><input type="number" id="optimizer-interval" value="15" min="0"></div>
+                </div>
+                <div class="form-group"><label for="optimizer-search">Add Customer / Location</label><input type="text" id="optimizer-search" placeholder="Search existing customers or new locations..."></div>
+                <div id="optimizer-stops-list"></div>
+                <button id="run-optimization-btn">Optimize This Route</button>
+            </div>
+            <div id="optimizer-results" class="hidden">
+                <h3>Optimized Route</h3>
+                <div id="optimizer-results-list"></div>
+                <button type="button" class="secondary-btn" id="optimizer-back-btn">Back to Inputs</button>
+            </div>
+        </div>
     </div>
-
-    <script>
-        function initGooglePlacesApi() {
-            const SHOP_ADDRESS = "1407 E Oklahoma Ave, Ulysses, KS 67880";
-            const autocompleteService = new google.maps.places.AutocompleteService();
-            const placesService = new google.maps.places.PlacesService(document.createElement('div'));
-            const directionsService = new google.maps.DirectionsService();
-
-            const getAddressComponent = (components, type, useShortName = false) => {
-                const component = components.find(c => c.types.includes(type));
-                if (!component) return '';
-                return useShortName ? component.short_name : component.long_name;
-            };
-
-            const updateCalendar = (dayId, customerName, shortAddress, travelTime) => {
-                const calendarDayContent = document.querySelector(`#cal-${dayId} .content`);
-                if (!calendarDayContent) return;
-
-                const entryDiv = document.createElement('div');
-                entryDiv.className = 'entry';
-                
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'name';
-                nameDiv.textContent = customerName;
-
-                const locationDiv = document.createElement('div');
-                locationDiv.className = 'location';
-                // Updated format for location and time
-                locationDiv.textContent = `${shortAddress} - ${travelTime.replace('s','')}`;
-
-                entryDiv.appendChild(nameDiv);
-                entryDiv.appendChild(locationDiv);
-                
-                calendarDayContent.innerHTML = ''; 
-                calendarDayContent.appendChild(entryDiv);
-            };
-            
-            document.querySelectorAll('.customer-name-search').forEach(input => {
-                let suggestionsList = null;
-
-                input.addEventListener('input', () => {
-                    const value = input.value;
-                    if (suggestionsList) {
-                        suggestionsList.remove();
-                        suggestionsList = null;
-                    }
-
-                    if (value) {
-                        autocompleteService.getPlacePredictions({ input: value, types: ['establishment'] }, (predictions, status) => {
-                            if (status === 'OK' && predictions) {
-                                suggestionsList = document.createElement('ul');
-                                suggestionsList.className = 'suggestions-list';
-                                input.parentNode.appendChild(suggestionsList);
-
-                                predictions.forEach(p => {
-                                    const item = document.createElement('li');
-                                    item.className = 'suggestion-item';
-                                    item.textContent = p.description;
-                                    item.addEventListener('click', () => {
-                                        placesService.getDetails({
-                                            placeId: p.place_id,
-                                            fields: ['name', 'address_components', 'formatted_address']
-                                        }, (place, status) => {
-                                            if (status === 'OK' && place) {
-                                                const customerEntry = input.closest('.customer-entry');
-                                                customerEntry.querySelector('.customer-name-search').value = place.name;
-                                                customerEntry.querySelector('.customer-address').value = place.formatted_address;
-                                                
-                                                if (suggestionsList) { suggestionsList.remove(); }
-
-                                                // Calculate travel time and update calendar with new format
-                                                directionsService.route({
-                                                    origin: SHOP_ADDRESS,
-                                                    destination: place.formatted_address,
-                                                    travelMode: 'DRIVING'
-                                                }, (response, status) => {
-                                                    if (status === 'OK') {
-                                                        const travelTime = response.routes[0].legs[0].duration.text;
-                                                        const dayId = input.closest('.day-card').id;
-                                                        
-                                                        // Create the shortened address
-                                                        const city = getAddressComponent(place.address_components, 'locality');
-                                                        const state = getAddressComponent(place.address_components, 'administrative_area_level_1', true); // Use short name for state
-                                                        const shortAddress = `${city}, ${state}`;
-
-                                                        updateCalendar(dayId, place.name, shortAddress, travelTime);
-                                                    } else {
-                                                        console.error('Directions request failed due to ' + status);
-                                                    }
-                                                });
-                                            }
-                                        });
-                                    });
-                                    suggestionsList.appendChild(item);
-                                });
-                            }
-                        });
-                    }
-                });
-
-                document.addEventListener('click', (e) => {
-                    if (suggestionsList && !input.parentNode.contains(e.target)) {
-                        suggestionsList.remove();
-                    }
-                });
-            });
-        }
-    </script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&libraries=places,directions&callback=initGooglePlacesApi"></script>
+    
+    <script src="config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="main.js" defer></script>
 
 </body>
 </html>
