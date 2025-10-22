@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,6 +83,16 @@
             <button type="button" class="cancel-btn" id="cancel-optimizer-panel">X</button>
             <div id="optimizer-inputs">
                 <div class="optimizer-config">
+                    <div class="form-group">
+                        <label for="optimizer-day-select">Day to Optimize</label>
+                        <select id="optimizer-day-select">
+                            <option value="monday">Monday</option>
+                            <option value="tuesday">Tuesday</option>
+                            <option value="wednesday">Wednesday</option>
+                            <option value="thursday">Thursday</option>
+                            <option value="friday">Friday</option>
+                        </select>
+                    </div>
                     <div class="form-group"><label for="optimizer-start-location">Start Location</label><select id="optimizer-start-location"><option value="shop">Shop</option><option value="syracuse">Syracuse</option></select></div>
                     <div class="form-group"><label for="optimizer-start-time">Start Time</label><input type="time" id="optimizer-start-time" value="08:00"></div>
                     <div class="form-group"><label for="optimizer-interval">Time at Stop (minutes)</label><input type="number" id="optimizer-interval" value="15" min="0"></div>

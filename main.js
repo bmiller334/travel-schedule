@@ -1,3 +1,4 @@
+
 // =================================================================================
 // INITIALIZATION
 // =================================================================================
@@ -263,7 +264,7 @@ window.initGooglePlacesApi = function() {
     // --- OPTIMIZER LOGIC ---
     function showOptimizerForDay(day) {
         const dayStops = scheduleData.schedule[day] ? Object.values(scheduleData.schedule[day]).sort((a, b) => a.order - b.order) : [];
-        optimizerList.innerHTML = dayStops.map(stop => `<li>${stop.name} - ${stop.address}</li>`).join('');
+        optimizerStopsList.innerHTML = dayStops.map(stop => `<li>${stop.name} - ${stop.address}</li>`).join('');
     }
     
     // --- SECTOR CALCULATOR LOGIC ---
@@ -378,7 +379,51 @@ window.initGooglePlacesApi = function() {
     });
 
     let suggestionsList = null;
-    optimizerSearch.addEventListener('input', () => { /* ... new optimizer search ... */ });
+    optimizerSearch.addEventListener('input', () => {
+        if (suggestionsList) suggestionsList.remove();
+        if (!optimizerSearch.value) return;
+
+        const existingCustomers = Object.values(scheduleData.schedule).flatMap(day => Object.values(day));
+        const matchingCustomers = existingCustomers.filter(customer => customer.name && customer.name.toLowerCase().includes(optimizerSearch.value.toLowerCase()));
+
+        const request = { input: optimizerSearch.value };
+        if (searchBiasCenter) {
+            request.locationBias = new google.maps.Circle({ center: searchBiasCenter, radius: 100000 });
+        }
+        
+        autocompleteService.getPlacePredictions(request, (predictions, status) => {
+            if (status === 'OK' && predictions) {
+                suggestionsList = document.createElement('ul');
+                suggestionsList.className = 'suggestions-list';
+                optimizerSearch.parentNode.appendChild(suggestionsList);
+                
+                const allSuggestions = [...matchingCustomers, ...predictions];
+
+                allSuggestions.forEach(p => {
+                    const item = document.createElement('li');
+                    item.className = 'suggestion-item';
+                    item.textContent = p.name || p.description;
+                    item.addEventListener('click', async () => {
+                        if (suggestionsList) suggestionsList.remove();
+                        
+                        if (p.placeId) {
+                            const place = new google.maps.places.Place({ id: p.placeId });
+                            await place.fetchFields({ fields: ['displayName', 'addressComponents', 'formattedAddress', 'id'] });
+                            selectedPlaceDetails = place;
+                            optimizerSearch.value = place.displayName;
+                        } else {
+                            const place = new google.maps.places.Place({ id: p.place_id });
+                            await place.fetchFields({ fields: ['displayName', 'addressComponents', 'formattedAddress', 'id'] });
+                            selectedPlaceDetails = place;
+                            optimizerSearch.value = place.displayName;
+                        }
+                    });
+                    suggestionsList.appendChild(item);
+                });
+            }
+        });
+    });
+
     searchInput.addEventListener('input', () => {
         if (suggestionsList) suggestionsList.remove();
         if (!searchInput.value) return;
@@ -410,7 +455,7 @@ window.initGooglePlacesApi = function() {
         });
     });
     document.addEventListener('click', (e) => {
-        if (suggestionsList && !searchInput.parentNode.contains(e.target)) {
+        if (suggestionsList && !searchInput.parentNode.contains(e.target) && !optimizerSearch.parentNode.contains(e.target)) {
             suggestionsList.remove();
         }
     });
