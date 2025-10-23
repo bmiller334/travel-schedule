@@ -51,7 +51,7 @@ function loadGoogleMapsScript() {
 // =================================================================================
 // HELPERS
 // =================================================================================
-function getTempColor(percentage) { return `hsl(${(percentage / 100) * 120}, 90%, 45%)`; }
+function getRatingColor(percentage) { return `hsl(${(percentage / 100) * 120}, 90%, 45%)`; }
 function getAddressComponent(components, type, useShortName = false) {
     if (!components) return '';
     const component = components.find(c => c.types.includes(type));
@@ -74,7 +74,7 @@ window.initGooglePlacesApi = function() {
     const panelTitle = document.getElementById('panel-title');
     const daySelect = document.getElementById('day-select');
     const searchInput = document.getElementById('customer-search');
-    const tempInput = document.getElementById('temperature-input');
+    const ratingInput = document.getElementById('rating-input');
     const mainActionBtn = document.getElementById('main-action-btn');
     const deleteBtn = document.getElementById('delete-btn');
     const notesSection = document.getElementById('notes-section');
@@ -82,6 +82,7 @@ window.initGooglePlacesApi = function() {
     const noteInput = document.getElementById('note-input');
     const addNoteBtn = document.getElementById('add-note-btn');
     const dayStartToggles = document.querySelectorAll('.day-start-btn');
+    const startTimeInputs = document.querySelectorAll('.start-time-input');
     const dropzones = document.querySelectorAll('.dropzone');
     const toggleSectorBtn = document.getElementById('toggle-sector-btn');
     const sectorCalculator = document.getElementById('sector-calculator');
@@ -93,22 +94,29 @@ window.initGooglePlacesApi = function() {
     const optimizerPanel = document.getElementById('optimizer-panel');
     const cancelEntryPanelBtn = document.getElementById('cancel-entry-panel');
     const cancelOptimizerPanelBtn = document.getElementById('cancel-optimizer-panel');
-    const optimizerStartLocation = document.getElementById('optimizer-start-location');
+    const optimizerStartLocationSearch = document.getElementById('optimizer-start-location-search');
+    const useGpsLocationStartBtn = document.getElementById('use-gps-location-start-btn');
+    const optimizerEndLocationSearch = document.getElementById('optimizer-end-location-search');
+    const useGpsLocationEndBtn = document.getElementById('use-gps-location-end-btn');
     const optimizerStartTime = document.getElementById('optimizer-start-time');
     const optimizerInterval = document.getElementById('optimizer-interval');
     const optimizerSearch = document.getElementById('optimizer-search');
+    const addStopBtn = document.getElementById('add-stop-btn');
     const optimizerStopsList = document.getElementById('optimizer-stops-list');
     const runOptimizationBtn = document.getElementById('run-optimization-btn');
     const optimizerResults = document.getElementById('optimizer-results');
     const optimizerResultsList = document.getElementById('optimizer-results-list');
     const optimizerBackBtn = document.getElementById('optimizer-back-btn');
-    const optimizerDaySelect = document.getElementById('optimizer-day-select');
+    const avoidTollsCheckbox = document.getElementById('avoid-tolls');
+    const avoidHighwaysCheckbox = document.getElementById('avoid-highways');
 
     // --- STATE ---
     let currentMode = 'hidden';
     let activeEntryKey = null;
     let selectedPlaceDetails = null;
-    let scheduleData = { schedule: {}, startLocations: {} };
+    let selectedStartPlaceDetails = null;
+    let selectedEndPlaceDetails = null;
+    let scheduleData = { schedule: {}, startLocations: {}, startTimes: {} };
     let draggedItem = null;
     let sectorMode = false;
     let searchBiasCenter = null;
@@ -121,29 +129,34 @@ window.initGooglePlacesApi = function() {
 
     db.ref().on('value', (snapshot) => {
         const data = snapshot.val() || {};
-        scheduleData = { schedule: data.schedule || {}, startLocations: data.startLocations || {} };
+        scheduleData = { 
+            schedule: data.schedule || {}, 
+            startLocations: data.startLocations || {},
+            startTimes: data.startTimes || {} 
+        };
         renderFullSchedule();
     });
 
     // --- RENDER FUNCTIONS ---
     async function getTravelTime(origin, destination) {
         return new Promise(resolve => {
-            if (!origin || !destination) return resolve('N/A');
+            if (!origin || !destination) return resolve({ text: 'N/A', value: 0 });
             directionsService.route({ origin, destination, travelMode: 'DRIVING' }, (response, status) => {
-                if (status === 'OK') resolve(response.routes[0].legs[0].duration.text);
-                else resolve('N/A');
+                if (status === 'OK') resolve(response.routes[0].legs[0].duration);
+                else resolve({ text: 'N/A', value: 0 });
             });
         });
     }
 
-    function renderConnector(time, startLabel = null) {
+    function renderConnector(time, arrivalTime, startLabel = null) {
         const connector = document.createElement('div');
         connector.className = 'entry-connector';
         let label = '';
         if (startLabel) {
             label = ` from ${startLabel.charAt(0).toUpperCase() + startLabel.slice(1)}`;
         }
-        connector.innerHTML = `<div class="connector-line"></div><div class="connector-time">${time}${label}</div>`;
+        const arrivalString = arrivalTime ? `ETA: ${arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '';
+        connector.innerHTML = `<div class="connector-line"></div><div class="connector-details"><span class="connector-time">${time}${label}</span><span class="connector-eta">${arrivalString}</span></div>`;
         return connector;
     }
 
@@ -156,7 +169,7 @@ window.initGooglePlacesApi = function() {
              if (typeof data[k] === 'object') entryDiv.dataset[k] = JSON.stringify(data[k]);
              else entryDiv.dataset[k] = data[k];
         });
-        entryDiv.innerHTML = `<div class="temp-dot" style="background-color: ${getTempColor(data.temp)};"></div><div class="name">${data.name} (${data.temp}%)</div><div class="location">${data.address}</div>`;
+        entryDiv.innerHTML = `<div class="rating-dot" style="background-color: ${getRatingColor(data.rating)};"></div><div class="name">${data.name} (${data.rating}%)</div><div class="location">${data.address}</div>`;
         entryDiv.addEventListener('click', () => editEntry(entryDiv));
         return entryDiv;
     }
@@ -165,15 +178,24 @@ window.initGooglePlacesApi = function() {
         for (const day of ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']) {
             const dayContainer = document.querySelector(`#cal-${day} .content`);
             dayContainer.innerHTML = '';
+            
             const startLocation = scheduleData.startLocations[day] || 'shop';
             document.querySelectorAll(`.day-start-btn[data-day="${day}"]`).forEach(btn => btn.classList.toggle('active', btn.dataset.location === startLocation));
+
+            const startTime = scheduleData.startTimes[day] || '08:00';
+            document.querySelector(`.start-time-input[data-day="${day}"]`).value = startTime;
+            let currentTime = new Date(`1970-01-01T${startTime}`);
+
             const dayStops = scheduleData.schedule[day] ? Object.entries(scheduleData.schedule[day]).sort(([, a], [, b]) => a.order - b.order) : [];
             let previousStopAddress = CONFIG.STARTING_LOCATIONS[startLocation];
+
             for (const [key, stopData] of dayStops) {
-                const travelTime = await getTravelTime(previousStopAddress, stopData.formattedAddress);
-                dayContainer.appendChild(renderConnector(travelTime, dayStops[0][0] === key ? startLocation : null));
+                const travelDuration = await getTravelTime(previousStopAddress, stopData.formattedAddress);
+                currentTime.setSeconds(currentTime.getSeconds() + travelDuration.value);
+                dayContainer.appendChild(renderConnector(travelDuration.text, currentTime, dayStops[0][0] === key ? startLocation : null));
                 dayContainer.appendChild(renderCalendarEntry(key, stopData));
                 previousStopAddress = stopData.formattedAddress;
+                currentTime.setMinutes(currentTime.getMinutes() + 15); // Default 15 mins per stop
             }
         }
     }
@@ -204,7 +226,7 @@ window.initGooglePlacesApi = function() {
         
         searchInput.value = data.name || '';
         daySelect.value = data.day || 'monday';
-        tempInput.value = data.temp || 50;
+        ratingInput.value = data.rating || 50;
         selectedPlaceDetails = null;
         renderNotes(data.notes);
     }
@@ -262,11 +284,15 @@ window.initGooglePlacesApi = function() {
     }
 
     // --- OPTIMIZER LOGIC ---
-    function showOptimizerForDay(day) {
-        const dayStops = scheduleData.schedule[day] ? Object.values(scheduleData.schedule[day]).sort((a, b) => a.order - b.order) : [];
-        optimizerStopsList.innerHTML = dayStops.map(stop => `<li>${stop.name} - ${stop.address}</li>`).join('');
+    function renderOptimizerStops() {
+        optimizerStopsList.innerHTML = optimizerStops.map((stop, index) => `
+            <div class="optimizer-stop" data-index="${index}">
+                <span>${stop.name} - ${stop.address || stop.formattedAddress}</span>
+                <button class="remove-stop-btn">X</button>
+            </div>
+        `).join('');
     }
-    
+
     // --- SECTOR CALCULATOR LOGIC ---
     const calculateAverage = () => {
         const values = Array.from(sectorInputs).map(input => parseInt(input.value, 10) || 0);
@@ -281,11 +307,11 @@ window.initGooglePlacesApi = function() {
         }
     };
 
-    const updateTempFromSectors = () => {
+    const updateRatingFromSectors = () => {
         if (!sectorMode) return;
         const average = calculateAverage();
-        tempInput.value = average;
-        tempInput.dispatchEvent(new Event('input'));
+        ratingInput.value = average;
+        ratingInput.dispatchEvent(new Event('input'));
     };
 
     const adjustWeights = (changedInput) => {
@@ -345,7 +371,7 @@ window.initGooglePlacesApi = function() {
                 name: selectedPlaceDetails.displayName,
                 address: `${getAddressComponent(selectedPlaceDetails.addressComponents, 'locality')}, ${getAddressComponent(selectedPlaceDetails.addressComponents, 'administrative_area_level_1', true)}`,
                 formattedAddress: selectedPlaceDetails.formattedAddress,
-                temp: tempInput.value,
+                rating: ratingInput.value,
                 day: day,
                 placeId: selectedPlaceDetails.id,
                 lastEditedBy: window.currentUser,
@@ -362,7 +388,7 @@ window.initGooglePlacesApi = function() {
                     ...currentData, 
                     day: newDay, 
                     name: searchInput.value,
-                    temp: tempInput.value,
+                    rating: ratingInput.value,
                     lastEditedBy: window.currentUser 
                 };
                 db.ref(`schedule/${originalDay}/${activeEntryKey}`).remove();
@@ -370,7 +396,7 @@ window.initGooglePlacesApi = function() {
             } else {
                 db.ref(`schedule/${originalDay}/${activeEntryKey}`).update({
                     name: searchInput.value,
-                    temp: tempInput.value,
+                    rating: ratingInput.value,
                     lastEditedBy: window.currentUser
                 });
             }
@@ -379,54 +405,116 @@ window.initGooglePlacesApi = function() {
     });
 
     let suggestionsList = null;
-    optimizerSearch.addEventListener('input', () => {
-        if (suggestionsList) suggestionsList.remove();
-        if (!optimizerSearch.value) return;
+    function setupAutocomplete(inputElement, onPlaceSelected) {
+        inputElement.addEventListener('input', () => {
+            if (suggestionsList) suggestionsList.remove();
+            if (!inputElement.value) return;
 
-        const existingCustomers = Object.values(scheduleData.schedule).flatMap(day => Object.values(day));
-        const matchingCustomers = existingCustomers.filter(customer => customer.name && customer.name.toLowerCase().includes(optimizerSearch.value.toLowerCase()));
-
-        const request = { input: optimizerSearch.value };
-        if (searchBiasCenter) {
-            request.locationBias = new google.maps.Circle({ center: searchBiasCenter, radius: 100000 });
-        }
-        
-        autocompleteService.getPlacePredictions(request, (predictions, status) => {
-            if (status === 'OK' && predictions) {
-                suggestionsList = document.createElement('ul');
-                suggestionsList.className = 'suggestions-list';
-                optimizerSearch.parentNode.appendChild(suggestionsList);
-                
-                const allSuggestions = [...matchingCustomers, ...predictions];
-
-                allSuggestions.forEach(p => {
-                    const item = document.createElement('li');
-                    item.className = 'suggestion-item';
-                    item.textContent = p.name || p.description;
-                    item.addEventListener('click', async () => {
-                        if (suggestionsList) suggestionsList.remove();
-                        
-                        if (p.placeId) {
-                            const place = new google.maps.places.Place({ id: p.placeId });
-                            await place.fetchFields({ fields: ['displayName', 'addressComponents', 'formattedAddress', 'id'] });
-                            selectedPlaceDetails = place;
-                            optimizerSearch.value = place.displayName;
-                        } else {
+            const request = { input: inputElement.value };
+            if (searchBiasCenter) {
+                request.locationBias = new google.maps.Circle({ center: searchBiasCenter, radius: 100000 });
+            }
+            
+            autocompleteService.getPlacePredictions(request, (predictions, status) => {
+                if (status === 'OK' && predictions) {
+                    suggestionsList = document.createElement('ul');
+                    suggestionsList.className = 'suggestions-list';
+                    inputElement.parentNode.appendChild(suggestionsList);
+                    
+                    predictions.forEach(p => {
+                        const item = document.createElement('li');
+                        item.className = 'suggestion-item';
+                        item.textContent = p.description;
+                        item.addEventListener('click', async () => {
+                            if (suggestionsList) suggestionsList.remove();
                             const place = new google.maps.places.Place({ id: p.place_id });
                             await place.fetchFields({ fields: ['displayName', 'addressComponents', 'formattedAddress', 'id'] });
-                            selectedPlaceDetails = place;
-                            optimizerSearch.value = place.displayName;
+                            onPlaceSelected(place);
+                            inputElement.value = place.displayName;
+                        });
+                        suggestionsList.appendChild(item);
+                    });
+                }
+            });
+        });
+    }
+
+    setupAutocomplete(optimizerStartLocationSearch, (place) => {
+        selectedStartPlaceDetails = place;
+    });
+    
+    setupAutocomplete(optimizerEndLocationSearch, (place) => {
+        selectedEndPlaceDetails = place;
+    });
+
+    setupAutocomplete(optimizerSearch, (place) => {
+        selectedPlaceDetails = place;
+    });
+    
+    addStopBtn.addEventListener('click', () => {
+        if (selectedPlaceDetails) {
+            optimizerStops.push({
+                name: selectedPlaceDetails.displayName,
+                formattedAddress: selectedPlaceDetails.formattedAddress,
+            });
+            renderOptimizerStops();
+            optimizerSearch.value = '';
+            selectedPlaceDetails = null;
+        }
+    });
+
+    function setupGpsButton(buttonElement, inputElement, onPlaceSelected) {
+        buttonElement.addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    geocoder.geocode({ location: userLocation }, (results, status) => {
+                        if (status === 'OK' && results[0]) {
+                            const place = {
+                                displayName: 'Current Location',
+                                formattedAddress: results[0].formatted_address,
+                            };
+                            onPlaceSelected(place);
+                            inputElement.value = 'Current Location';
+                        } else {
+                            alert('Could not determine your address from your location.');
                         }
                     });
-                    suggestionsList.appendChild(item);
+                }, () => {
+                    alert('Unable to retrieve your location.');
                 });
+            } else {
+                alert('Geolocation is not supported by this browser.');
             }
         });
+    }
+
+    setupGpsButton(useGpsLocationStartBtn, optimizerStartLocationSearch, (place) => {
+        selectedStartPlaceDetails = place;
     });
+    
+    setupGpsButton(useGpsLocationEndBtn, optimizerEndLocationSearch, (place) => {
+        selectedEndPlaceDetails = place;
+    });
+    
+    optimizerStopsList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-stop-btn')) {
+            const index = e.target.closest('.optimizer-stop').dataset.index;
+            optimizerStops.splice(index, 1);
+            renderOptimizerStops();
+        }
+    });
+
 
     searchInput.addEventListener('input', () => {
         if (suggestionsList) suggestionsList.remove();
         if (!searchInput.value) return;
+
+        const allCustomers = Object.values(scheduleData.schedule).flatMap(day => Object.values(day));
+        const matchingCustomers = allCustomers.filter(customer => customer.name && customer.name.toLowerCase().includes(searchInput.value.toLowerCase()));
         
         const request = { input: searchInput.value };
         if (searchBiasCenter) {
@@ -434,20 +522,40 @@ window.initGooglePlacesApi = function() {
         }
         
         autocompleteService.getPlacePredictions(request, (predictions, status) => {
-            if (status === 'OK' && predictions) {
+            if (status === 'OK') {
                 suggestionsList = document.createElement('ul');
                 suggestionsList.className = 'suggestions-list';
                 searchInput.parentNode.appendChild(suggestionsList);
-                predictions.forEach(p => {
+
+                const googlePredictions = predictions || [];
+                const combinedResults = [
+                    ...matchingCustomers.map(c => ({...c, isExisting: true})),
+                    ...googlePredictions.map(p => ({...p, isExisting: false}))
+                ];
+
+                const uniqueResults = Array.from(new Map(combinedResults.map(item => [item.name || item.description, item])).values());
+                
+                uniqueResults.forEach(p => {
                     const item = document.createElement('li');
                     item.className = 'suggestion-item';
-                    item.textContent = p.description;
+                    item.textContent = p.isExisting ? `${p.name} (Existing)` : p.description;
+                    
                     item.addEventListener('click', async () => {
                         if (suggestionsList) suggestionsList.remove();
-                        const place = new google.maps.places.Place({ id: p.place_id });
-                        await place.fetchFields({ fields: ['displayName', 'addressComponents', 'formattedAddress', 'id'] });
-                        selectedPlaceDetails = place;
-                        searchInput.value = place.displayName;
+                        if (p.isExisting) {
+                             selectedPlaceDetails = {
+                                displayName: p.name,
+                                formattedAddress: p.formattedAddress,
+                                addressComponents: [], 
+                                id: p.placeId
+                            };
+                            searchInput.value = p.name;
+                        } else {
+                            const place = new google.maps.places.Place({ id: p.place_id });
+                            await place.fetchFields({ fields: ['displayName', 'addressComponents', 'formattedAddress', 'id'] });
+                            selectedPlaceDetails = place;
+                            searchInput.value = place.displayName;
+                        }
                     });
                     suggestionsList.appendChild(item);
                 });
@@ -455,16 +563,24 @@ window.initGooglePlacesApi = function() {
         });
     });
     document.addEventListener('click', (e) => {
-        if (suggestionsList && !searchInput.parentNode.contains(e.target) && !optimizerSearch.parentNode.contains(e.target)) {
+        if (suggestionsList && !e.target.closest('.form-group')) {
             suggestionsList.remove();
         }
     });
+
 
     dayStartToggles.forEach(btn => {
         btn.addEventListener('click', () => {
             const day = btn.dataset.day;
             const location = btn.dataset.location;
             db.ref(`startLocations/${day}`).set(location);
+        });
+    });
+
+    startTimeInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            const day = input.dataset.day;
+            db.ref(`startTimes/${day}`).set(input.value);
         });
     });
 
@@ -504,7 +620,6 @@ window.initGooglePlacesApi = function() {
         optimizerPanel.classList.remove('hidden');
         document.querySelector('.controls').classList.add('hidden');
         showAddPanelBtn.classList.add('hidden');
-        showOptimizerForDay(optimizerDaySelect.value);
     });
     cancelEntryPanelBtn.addEventListener('click', () => {
         setPanelMode('hidden');
@@ -514,17 +629,31 @@ window.initGooglePlacesApi = function() {
         document.querySelector('.controls').classList.remove('hidden');
         showAddPanelBtn.classList.remove('hidden');
     });
-    optimizerDaySelect.addEventListener('change', () => showOptimizerForDay(optimizerDaySelect.value));
     runOptimizationBtn.addEventListener('click', () => { 
-        if (optimizerStops.length < 2) return alert("Please add at least two stops to optimize.");
-        const origin = CONFIG.STARTING_LOCATIONS[optimizerStartLocation.value];
+        if (!selectedStartPlaceDetails) return alert("Please set a start location.");
+        if (!selectedEndPlaceDetails) return alert("Please set a last stop.");
+        if (optimizerStops.length < 1) return alert("Please add at least one stop to optimize.");
+
+        const origin = selectedStartPlaceDetails.formattedAddress;
+        const destination = selectedEndPlaceDetails.formattedAddress;
         const waypoints = optimizerStops.map(stop => ({ location: stop.formattedAddress }));
-        directionsService.route({ origin, destination: origin, waypoints, travelMode: 'DRIVING', optimizeWaypoints: true }, (response, status) => {
+        
+        const request = {
+            origin,
+            destination,
+            waypoints,
+            travelMode: 'DRIVING',
+            optimizeWaypoints: true,
+            avoidTolls: avoidTollsCheckbox.checked,
+            avoidHighways: avoidHighwaysCheckbox.checked,
+        };
+
+        directionsService.route(request, (response, status) => {
             if (status === 'OK') {
                 const newOrderMap = response.routes[0].waypoint_order;
                 const legs = response.routes[0].legs;
                 let currentTime = new Date(`1970-01-01T${optimizerStartTime.value}`);
-                let resultsHTML = `<div class="result-item"><div class="result-time">${currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div><div class="result-details"><strong>Start from ${optimizerStartLocation.value}</strong></div></div>`;
+                let resultsHTML = `<div class="result-item"><div class="result-time">${currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div><div class="result-details"><strong>Start from ${selectedStartPlaceDetails.displayName}</strong></div></div>`;
                 newOrderMap.forEach((originalIndex, i) => {
                     const travelDurationSeconds = legs[i].duration.value;
                     currentTime.setSeconds(currentTime.getSeconds() + travelDurationSeconds);
@@ -532,6 +661,11 @@ window.initGooglePlacesApi = function() {
                     resultsHTML += `<div class="result-item"><div class="result-time">${currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div><div class="result-details">${stop.name}</div></div>`;
                     currentTime.setMinutes(currentTime.getMinutes() + parseInt(optimizerInterval.value, 10));
                 });
+                
+                const lastLegDuration = legs[legs.length - 1].duration.value;
+                currentTime.setSeconds(currentTime.getSeconds() + lastLegDuration);
+                resultsHTML += `<div class="result-item"><div class="result-time">${currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div><div class="result-details"><strong>Last Stop: ${selectedEndPlaceDetails.displayName}</strong></div></div>`;
+
                 optimizerResultsList.innerHTML = resultsHTML;
                 optimizerResults.classList.remove('hidden');
                 optimizerInputs.classList.add('hidden');
@@ -548,17 +682,17 @@ window.initGooglePlacesApi = function() {
     toggleSectorBtn.addEventListener('click', () => {
         sectorMode = !sectorMode;
         sectorCalculator.classList.toggle('hidden');
-        document.getElementById('simple-temp-group').classList.toggle('hidden');
+        document.getElementById('simple-rating-group').classList.toggle('hidden');
         toggleSectorBtn.textContent = sectorMode ? 'Disable Sector Calculation' : 'Enable Sector Calculation';
-        if(sectorMode) updateTempFromSectors();
+        if(sectorMode) updateRatingFromSectors();
     });
     enableWeightingCheckbox.addEventListener('change', () => {
         weightingInputsContainer.classList.toggle('hidden', !enableWeightingCheckbox.checked);
-        updateTempFromSectors();
+        updateRatingFromSectors();
     });
-    sectorInputs.forEach(input => input.addEventListener('input', updateTempFromSectors));
+    sectorInputs.forEach(input => input.addEventListener('input', updateRatingFromSectors));
     weightInputs.forEach(input => {
         input.addEventListener('input', () => adjustWeights(input));
-        input.addEventListener('change', updateTempFromSectors);
+        input.addEventListener('change', updateRatingFromSectors);
     });
 };

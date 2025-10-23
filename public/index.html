@@ -28,11 +28,11 @@
         </div>
         
         <div class="calendar-view">
-            <div class="calendar-day" id="cal-monday"><div class="day-header"><h3>Monday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="monday" data-location="shop">Shop</button><button class="day-start-btn" data-day="monday" data-location="syracuse">Syracuse</button></div></div><div class="content dropzone"></div></div>
-            <div class="calendar-day" id="cal-tuesday"><div class="day-header"><h3>Tuesday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="tuesday" data-location="shop">Shop</button><button class="day-start-btn" data-day="tuesday" data-location="syracuse">Syracuse</button></div></div><div class="content dropzone"></div></div>
-            <div class="calendar-day" id="cal-wednesday"><div class="day-header"><h3>Wednesday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="wednesday" data-location="shop">Shop</button><button class="day-start-btn" data-day="wednesday" data-location="syracuse">Syracuse</button></div></div><div class="content dropzone"></div></div>
-            <div class="calendar-day" id="cal-thursday"><div class="day-header"><h3>Thursday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="thursday" data-location="shop">Shop</button><button class="day-start-btn" data-day="thursday" data-location="syracuse">Syracuse</button></div></div><div class="content dropzone"></div></div>
-            <div class="calendar-day" id="cal-friday"><div class="day-header"><h3>Friday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="friday" data-location="shop">Shop</button><button class="day-start-btn" data-day="friday" data-location="syracuse">Syracuse</button></div></div><div class="content dropzone"></div></div>
+            <div class="calendar-day" id="cal-monday"><div class="day-header"><h3>Monday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="monday" data-location="shop">Shop</button><button class="day-start-btn" data-day="monday" data-location="syracuse">Syracuse</button></div><div class="day-start-time"><input type="time" class="start-time-input" data-day="monday" value="08:00"></div></div><div class="content dropzone"></div></div>
+            <div class="calendar-day" id="cal-tuesday"><div class="day-header"><h3>Tuesday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="tuesday" data-location="shop">Shop</button><button class="day-start-btn" data-day="tuesday" data-location="syracuse">Syracuse</button></div><div class="day-start-time"><input type="time" class="start-time-input" data-day="tuesday" value="08:00"></div></div><div class="content dropzone"></div></div>
+            <div class="calendar-day" id="cal-wednesday"><div class="day-header"><h3>Wednesday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="wednesday" data-location="shop">Shop</button><button class="day-start-btn" data-day="wednesday" data-location="syracuse">Syracuse</button></div><div class="day-start-time"><input type="time" class="start-time-input" data-day="wednesday" value="08:00"></div></div><div class="content dropzone"></div></div>
+            <div class="calendar-day" id="cal-thursday"><div class="day-header"><h3>Thursday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="thursday" data-location="shop">Shop</button><button class="day-start-btn" data-day="thursday" data-location="syracuse">Syracuse</button></div><div class="day-start-time"><input type="time" class="start-time-input" data-day="thursday" value="08:00"></div></div><div class="content dropzone"></div></div>
+            <div class="calendar-day" id="cal-friday"><div class="day-header"><h3>Friday</h3><div class="day-start-toggle"><button class="day-start-btn active" data-day="friday" data-location="shop">Shop</button><button class="day-start-btn" data-day="friday" data-location="syracuse">Syracuse</button></div><div class="day-start-time"><input type="time" class="start-time-input" data-day="friday" value="08:00"></div></div><div class="content dropzone"></div></div>
         </div>
         
         <div class="controls">
@@ -46,7 +46,7 @@
                 <div class="panel-left">
                     <div class="form-group"><label for="day-select">Day of the Week</label><select id="day-select"><option value="monday">Monday</option><option value="tuesday">Tuesday</option><option value="wednesday">Wednesday</option><option value="thursday">Thursday</option><option value="friday">Friday</option></select></div>
                     <div class="form-group"><label for="customer-search">Customer Name</label><input type="text" id="customer-search" placeholder="Start typing a name..."></div>
-                    <div class="form-group" id="simple-temp-group"><label for="temperature-input">Customer Temperature (%)</label><input type="number" id="temperature-input" min="1" max="99" value="50"></div>
+                    <div class="form-group" id="simple-rating-group"><label for="rating-input">Customer Rating (%)</label><input type="number" id="rating-input" min="1" max="99" value="50"></div>
                     <button type="button" class="secondary-btn" id="toggle-sector-btn">Enable Sector Calculation</button>
                     <div id="sector-calculator" class="hidden">
                         <div class="sector-inputs">
@@ -82,22 +82,50 @@
             <h2>Route Optimizer</h2>
             <button type="button" class="cancel-btn" id="cancel-optimizer-panel">X</button>
             <div id="optimizer-inputs">
-                <div class="optimizer-config">
+                <div class="optimizer-grid">
                     <div class="form-group">
-                        <label for="optimizer-day-select">Day to Optimize</label>
-                        <select id="optimizer-day-select">
-                            <option value="monday">Monday</option>
-                            <option value="tuesday">Tuesday</option>
-                            <option value="wednesday">Wednesday</option>
-                            <option value="thursday">Thursday</option>
-                            <option value="friday">Friday</option>
-                        </select>
+                        <label for="optimizer-start-location-search">Start Location</label>
+                        <div class="input-group">
+                            <input type="text" id="optimizer-start-location-search" placeholder="Search...">
+                            <button id="use-gps-location-start-btn" class="icon-btn" aria-label="Use current location">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
+                                    <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    <div class="form-group"><label for="optimizer-start-location">Start Location</label><select id="optimizer-start-location"><option value="shop">Shop</option><option value="syracuse">Syracuse</option></select></div>
+                    <div class="form-group">
+                        <label for="optimizer-end-location-search">Last Stop</label>
+                        <div class="input-group">
+                            <input type="text" id="optimizer-end-location-search" placeholder="Search...">
+                            <button id="use-gps-location-end-btn" class="icon-btn" aria-label="Use current location">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
+                                    <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                     <div class="form-group"><label for="optimizer-start-time">Start Time</label><input type="time" id="optimizer-start-time" value="08:00"></div>
                     <div class="form-group"><label for="optimizer-interval">Time at Stop (minutes)</label><input type="number" id="optimizer-interval" value="15" min="0"></div>
                 </div>
-                <div class="form-group"><label for="optimizer-search">Add Customer / Location</label><input type="text" id="optimizer-search" placeholder="Search existing customers or new locations..."></div>
+                 <div id="optimizer-options" class="form-group">
+                    <label>Options</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="avoid-tolls">
+                        <label for="avoid-tolls">Avoid Tolls</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="avoid-highways">
+                        <label for="avoid-highways">Avoid Highways</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="optimizer-search">Add Stops to Route</label>
+                    <div class="input-group">
+                        <input type="text" id="optimizer-search" placeholder="Search existing customers or new locations...">
+                        <button id="add-stop-btn">Add</button>
+                    </div>
+                </div>
                 <div id="optimizer-stops-list"></div>
                 <button id="run-optimization-btn">Optimize This Route</button>
             </div>

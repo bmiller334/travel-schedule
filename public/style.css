@@ -41,7 +41,7 @@ h1 { text-align: left; color: #343a40; margin: 0; }
 .entry:hover { background-color: #f0f8ff; }
 .entry .name { font-weight: bold; font-size: 0.9em; }
 .entry .location { font-size: 0.8em; color: #666; }
-.temp-dot { height: 12px; width: 12px; border-radius: 50%; position: absolute; left: 4px; top: 8px; border: 1px solid rgba(0,0,0,0.1); }
+.rating-dot { height: 12px; width: 12px; border-radius: 50%; position: absolute; left: 4px; top: 8px; border: 1px solid rgba(0,0,0,0.1); }
 .entry-connector { display: flex; align-items: center; margin-left: 10px; height: 25px; }
 .connector-line { width: 2px; height: 100%; background-color: #007bff; }
 .connector-time { margin-left: 10px; font-size: 0.75em; font-weight: normal; color: #555; }
@@ -49,7 +49,10 @@ h1 { text-align: left; color: #343a40; margin: 0; }
 .controls { text-align: center; margin-bottom: 2rem; }
 
 /* --- OPTIMIZER PANEL --- */
-.optimizer-config { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+.optimizer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.optimizer-grid .form-group { margin-bottom: 0; }
+#optimizer-options { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
+#optimizer-options .checkbox-group { margin-bottom: 0; }
 #optimizer-stops-list { min-height: 100px; border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; margin-bottom: 1.5rem; }
 .optimizer-stop { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid #f1f3f5; }
 .optimizer-stop:last-child { border-bottom: none; }
@@ -63,9 +66,14 @@ h1 { text-align: left; color: #343a40; margin: 0; }
 .form-group { margin-bottom: 1.5rem; position: relative; }
 label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
 input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
+.input-group { display: flex; }
+.input-group input { border-right: none; border-radius: 4px 0 0 4px; }
+.input-group button { border-radius: 0 4px 4px 0; width: auto; flex-shrink: 0; margin-top: 0; }
+.input-group .icon-btn { padding: 0.75rem; }
+
 button { width: 100%; padding: 0.85rem; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 0.5rem; }
 .action-buttons { margin-top: 2rem; }
-#main-action-btn, #run-optimization-btn, #optimize-route-btn { background-color: #007bff; color: white; }
+#main-action-btn, #run-optimization-btn, #optimize-route-btn, #add-stop-btn { background-color: #007bff; color: white; }
 .secondary-btn { background-color: #6c757d; color: white; }
 .danger-btn { background-color: #dc3545; color: white; }
 .suggestions-list { list-style-type: none; padding: 0; margin: 0; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; position: absolute; top: 100%; left: 0; right: 0; background-color: white; z-index: 1000; }
